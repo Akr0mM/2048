@@ -1,18 +1,18 @@
 CFLAGS = -g -Wall -Wextra -std=c99
 CLIBS = -Isrc/Include -Lsrc/lib -lmingw32 -lSDL2main \
 		-lSDL2_image -lSDL2_ttf -lSDL2_mixer -lSDL2
-OBJECTS = sort.o
+OBJECTS = main.o
 
-all: test_Sort	#default goal
+all: test_2048	#default goal
 
-test_Sort: $(OBJECTS)
-	gcc $(CFLAGS) -o test_Sort $(OBJECTS) $(CLIBS)
+test_2048: $(OBJECTS)
+	gcc $(CFLAGS) -o test_2048 $(OBJECTS) $(CLIBS)
 
-sort.o: sort.c
-	gcc $(CFLAGS) -c sort.c $(CLIBS)
+main.o: main.c
+	gcc $(CFLAGS) -c main.c $(CLIBS)
 
 run:
-	test_Sort
+	test_2048
 
 .PHONY : clean
 clean:
