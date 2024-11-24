@@ -46,9 +46,13 @@ void moveDown(void);
 void moveRight(void);
 void moveUp(void);
 void moveLeft(void);
+void spawnTile(void);
+Color getTileColor(int value);
+
 
 int board[4][4];
 int input = 0;
+int score = 0;
 
 int main(int argc, char **argv)
 {
@@ -87,29 +91,153 @@ void update(void) {
         moveLeft();
     }
 
+    if (input != 0) spawnTile();
+
     // reset input
     input = 0;
 }
 
-void moveDown() {
+void spawnTile() {
+    int empty[16][2];
+    int count = 0;
+
     for (int i = 0; i < 4; i++) {
-        for (int j = 3; j >= 0; j--) {
-            
+        for (int j = 0; j < 4; j++) {
+            if (board[i][j] == 0) {
+                empty[count][0] = i;
+                empty[count][1] = j;
+                count++;
+            }
+        }
+    }
+
+    if (count > 0) {
+        int random = rand() % count;
+        int x = empty[random][0];
+        int y = empty[random][1];
+        board[x][y] = (rand() % 10 == 0) ? 4 : 2; // 10% chance pour un 4
+    }
+}
+
+
+void moveDown() {
+    for (int j = 0; j < 4; j++) { // Parcourt chaque colonne
+        int last_merged = 4; // Initialise à une valeur hors limite (4)
+        for (int i = 2; i >= 0; i--) { // Parcourt chaque ligne de bas en haut
+            if (board[i][j] != 0) { // Si la case n'est pas vide
+                int k = i;
+                while (k < 3 && board[k + 1][j] == 0) { // Déplace vers le bas
+                    board[k + 1][j] = board[k][j];
+                    board[k][j] = 0;
+                    k++;
+                }
+                // Fusionne si possible
+                if (k < 3 && board[k + 1][j] == board[k][j] && k + 1 < last_merged) {
+                    board[k + 1][j] *= 2;
+                    score += board[k + 1][j];
+                    board[k][j] = 0;
+                    last_merged = k + 1; // Met à jour last_merged
+                }
+            }
         }
     }
 }
 
 void moveRight() {
-    
+    for (int i = 0; i < 4; i++) {
+        int last_merged = 4; // Initialise à une valeur hors limite (4)
+        for (int j = 2; j >= 0; j--) {
+            if (board[i][j] != 0) {
+                int k = j;
+                while (k < 3 && board[i][k + 1] == 0) { // Déplace à droite
+                    board[i][k + 1] = board[i][k];
+                    board[i][k] = 0;
+                    k++;
+                }
+                // Fusionne si possible
+                if (k < 3 && board[i][k + 1] == board[i][k] && k + 1 < last_merged) {
+                    board[i][k + 1] *= 2;
+                    score += board[i][k + 1];
+                    board[i][k] = 0;
+                    last_merged = k + 1; // Met à jour last_merged
+                }
+            }
+        }
+    }
 }
 
 void moveUp() {
-    
+    for (int j = 0; j < 4; j++) {
+        int last_merged = -1; // Initialise à une valeur hors limite (-1)
+        for (int i = 1; i < 4; i++) {
+            if (board[i][j] != 0) {
+                int k = i;
+                while (k > 0 && board[k - 1][j] == 0) { // Déplace vers le haut
+                    board[k - 1][j] = board[k][j];
+                    board[k][j] = 0;
+                    k--;
+                }
+                // Fusionne si possible
+                if (k > 0 && board[k - 1][j] == board[k][j] && k - 1 > last_merged) {
+                    board[k - 1][j] *= 2;
+                    score += board[k - 1][j];
+                    board[k][j] = 0;
+                    last_merged = k - 1; // Met à jour last_merged
+                }
+            }
+        }
+    }
 }
 
+
 void moveLeft() {
-    
+    for (int i = 0; i < 4; i++) {
+        int last_merged = -1; // Initialise à une valeur hors limite (-1)
+        for (int j = 1; j < 4; j++) {
+            if (board[i][j] != 0) {
+                int k = j;
+                while (k > 0 && board[i][k - 1] == 0) { // Déplace à gauche
+                    board[i][k - 1] = board[i][k];
+                    board[i][k] = 0;
+                    k--;
+                }
+                // Fusionne si possible
+                if (k > 0 && board[i][k - 1] == board[i][k] && k - 1 > last_merged) {
+                    board[i][k - 1] *= 2;
+                    score += board[i][k - 1];
+                    board[i][k] = 0;
+                    last_merged = k - 1; // Met à jour last_merged
+                }
+            }
+        }
+    }
 }
+
+Color getTileColor(int value) {
+    switch (value) {
+        case 2:    return (Color){238, 228, 218, 255};
+        case 4:    return (Color){237, 224, 200, 255};
+        case 8:    return (Color){242, 177, 121, 255};
+        case 16:   return (Color){245, 149, 99, 255};
+        case 32:   return (Color){246, 124, 95, 255};
+        case 64:   return (Color){246, 94, 59, 255};
+        case 128:  return (Color){237, 207, 114, 255};
+        case 256:  return (Color){237, 204, 97, 255};
+        case 512:  return (Color){237, 200, 80, 255};
+        case 1024: return (Color){237, 197, 63, 255};
+        case 2048: return (Color){237, 194, 46, 255};
+        case 4096: return (Color){0, 0, 0, 255}; // Noir total pour 4096
+        default:   // Intensité croissante de noir pour les tuiles supérieures à 4096
+            if (value > 4096) {
+                int intensity = 255 - (value / 4096) * 10; // Réduire la luminosité avec un pas de 10
+                if (intensity < 0) intensity = 0;         // Cap pour éviter une luminosité négative
+                return (Color){intensity, intensity, intensity, 255};
+            }
+            return (Color){204, 194, 184, 255}; // Couleur par défaut pour 0 ou inconnus
+    }
+}
+
+
 
 void draw() {
     // clear bg
@@ -124,7 +252,7 @@ void draw() {
         for (int j = 0; j < 4; j++) {
             int x = BOARD_XOFFSET + GRID_GAP + j * (TILES_WIDTH + GRID_GAP);
             int y = BOARD_YOFFSET + GRID_GAP + i * (TILES_WIDTH + GRID_GAP);
-            rect(x, y, TILES_WIDTH, TILES_HEIGHT, TILE);
+            rect(x, y, TILES_WIDTH, TILES_HEIGHT, getTileColor(board[i][j]));
 
             if (board[i][j] != 0) { // Si la valeur n'est pas 0, on affiche
                 char text[10];
@@ -133,6 +261,12 @@ void draw() {
             }
         }
     }
+
+    // score
+    char scoreText[50]; // Taille suffisante pour contenir "Score : " et un grand nombre
+    sprintf(scoreText, "Score : %d", score); // Formate la chaîne avec le score
+    draw_text(scoreText, 10, 10); // Affiche le texte à la position (10, 10)
+
 }
 
 
