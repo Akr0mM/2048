@@ -14,6 +14,7 @@
 #define RED 255, 0, 0, 255
 #define BG 187, 187, 187, 255
 #define BOARD_BG (Color){184, 173, 160, 255}
+#define DEATH_BG (Color){164, 153, 140, 255}
 #define TILE (Color){204, 194, 184, 255}
 
 typedef struct {
@@ -47,9 +48,10 @@ void moveRight(void);
 void moveUp(void);
 void moveLeft(void);
 void spawnTile(void);
+void checkGameOver(void);
 Color getTileColor(int value);
 
-
+bool gameOver = false;
 int board[4][4];
 int input = 0;
 int score = 0;
@@ -81,21 +83,52 @@ int main(int argc, char **argv)
 }
 
 void update(void) {
-    if (input == 1) { // DOWN
-        moveDown();
-    } else if (input == 2) { // RIGHT
-        moveRight();
-    } else if (input == -1) { // UP
-        moveUp();
-    } else if (input == -2) { // LEFT
-        moveLeft();
-    }
+    if (!gameOver) {
+        if (input == 1) { // DOWN
+            moveDown();
+        } else if (input == 2) { // RIGHT
+            moveRight();
+        } else if (input == -1) { // UP
+            moveUp();
+        } else if (input == -2) { // LEFT
+            moveLeft();
+        }
 
-    if (input != 0) spawnTile();
+        if (input != 0) spawnTile();
+    }
 
     // reset input
     input = 0;
+
+    checkGameOver();
 }
+
+void checkGameOver() {
+    bool hasEmpty = false;  // Vérifie s'il reste des cases vides
+    bool canMerge = false;  // Vérifie si des fusions sont possibles
+
+    for (int i = 0; i < 4; i++) {
+        for (int j = 0; j < 4; j++) {
+            if (board[i][j] == 0) {
+                hasEmpty = true;  // Une case vide a été trouvée
+                break;
+            }
+
+            // Vérifier les fusions possibles avec les voisins
+            if ((i < 3 && board[i][j] == board[i + 1][j]) ||  // Fusion possible en bas
+                (j < 3 && board[i][j] == board[i][j + 1])) {  // Fusion possible à droite
+                canMerge = true;
+            }
+        }
+        if (hasEmpty) break;  // Pas besoin de continuer si une case vide est trouvée
+    }
+
+    // Si aucune case vide et aucune fusion possible, le jeu est terminé
+    if (!hasEmpty && !canMerge) {
+        gameOver = true;
+    }
+}
+
 
 void spawnTile() {
     int empty[16][2];
@@ -267,6 +300,18 @@ void draw() {
     sprintf(scoreText, "Score : %d", score); // Formate la chaîne avec le score
     draw_text(scoreText, 10, 10); // Affiche le texte à la position (10, 10)
 
+
+    if (gameOver) {
+        rect(150, 150, 400, 400, DEATH_BG);
+
+        char gameOverText[50]; 
+        sprintf(gameOverText, "Game Over !");
+        draw_text(gameOverText, 265, 200);
+
+        char finalScore[50]; 
+        sprintf(finalScore, "Score : %d", score);
+        draw_text(finalScore, 270, 300);
+    }
 }
 
 
